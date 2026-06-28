@@ -6,292 +6,394 @@
   <title>EcoSort Dashboard</title>
   <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
   <style>
-    /* ===== RESET & BASE ===== */
+    /* ===== RESET & BASE STYLE ===== */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
+ 
     :root {
-      --bg-main:      #0f172a;
-      --bg-card:      #1e293b;
-      --bg-card2:     #0f172a;
-      --border:       #334155;
-      --text-main:    #f1f5f9;
-      --text-muted:   #94a3b8;
-      --green:        #22c55e;
-      --green-dim:    #16a34a33;
+      --bg-main:      #f1f5f9;
+      --bg-card:      #ffffff;
+      --bg-inner:     #f1f5f9;
+      --border:       #e2e8f0;
+      --text-main:    #0f172a;
+      --text-muted:   #64748b;
+ 
+      --green:        #10b981;
+      --green-dim:    #d1fae5;
       --blue:         #3b82f6;
-      --blue-dim:     #1d4ed833;
-      --yellow:       #f59e0b;
+      --blue-dim:     #dbeafe;
       --red:          #ef4444;
       --accent:       #6366f1;
+      --accent-dim:   #e0e7ff;
+      --shadow:       0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -4px rgba(0, 0, 0, 0.05);
+      --shadow-lg:    0 20px 25px -5px rgba(0, 0, 0, 0.06), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
     }
-
+ 
     body {
-      font-family: 'Segoe UI', system-ui, sans-serif;
+      font-family: 'Plus Jakarta Sans', 'Segoe UI', system-ui, sans-serif;
       background: var(--bg-main);
       color: var(--text-main);
       min-height: 100vh;
-      padding: 20px;
+      padding: 32px 20px 60px;
+      line-height: 1.5;
     }
-
-    /* ===== HEADER ===== */
-    header {
-      text-align: center;
+ 
+    .container {
+      max-width: 1180px;
+      margin: 0 auto;
+    }
+ 
+    /* ===== HERO ===== */
+    .hero {
+      background: linear-gradient(135deg, #eef2ff 0%, #f8fafc 60%, #eff6ff 100%);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 40px 44px;
+      box-shadow: var(--shadow);
       margin-bottom: 28px;
     }
-    header h1 {
-      font-size: 2rem;
-      font-weight: 700;
-      letter-spacing: -0.5px;
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--accent);
+      color: #fff;
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 8px 18px;
+      border-radius: 99px;
+      margin-bottom: 22px;
     }
-    header h1 span { color: var(--green); }
-    header p { color: var(--text-muted); font-size: 0.9rem; margin-top: 4px; }
-
-    /* ===== STATUS BAR ===== */
+    .hero h1 {
+      font-size: 2.6rem;
+      font-weight: 800;
+      letter-spacing: -1px;
+      color: #1e293b;
+      margin-bottom: 16px;
+    }
+    .hero h1 .accent { color: var(--accent); }
+    .hero p {
+      color: var(--text-muted);
+      font-size: 1.05rem;
+      font-weight: 500;
+      max-width: 720px;
+    }
+ 
+    /* ===== MAIN LAYOUT ===== */
+    .layout {
+      display: grid;
+      grid-template-columns: 1.4fr 1fr;
+      gap: 22px;
+      align-items: start;
+    }
+    @media (max-width: 880px) {
+      .layout { grid-template-columns: 1fr; }
+    }
+    .col { display: flex; flex-direction: column; gap: 22px; }
+ 
+    /* ===== CARD UI ===== */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 24px 26px;
+      box-shadow: var(--shadow);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
+    }
+    .card-label {
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      color: var(--text-muted);
+      margin-bottom: 14px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card-value {
+      font-size: 2.4rem;
+      font-weight: 800;
+      line-height: 1;
+      color: #1e293b;
+    }
+    .card-unit { font-size: 1.1rem; color: var(--text-muted); margin-left: 6px; font-weight: 500; }
+ 
+    /* row of small stat cards */
+    .stat-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+ 
+    /* ===== STATUS BAR (top right) ===== */
     #status-bar {
       display: flex;
       align-items: center;
-      justify-content: center;
-      gap: 8px;
+      gap: 10px;
       background: var(--bg-card);
       border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 10px 20px;
-      margin-bottom: 24px;
-      font-size: 0.9rem;
+      border-radius: 14px;
+      padding: 14px 22px;
+      font-size: 0.92rem;
+      font-weight: 700;
+      box-shadow: var(--shadow);
     }
     #status-dot {
       width: 10px; height: 10px;
       border-radius: 50%;
       background: var(--red);
       transition: background 0.4s;
+      flex-shrink: 0;
     }
-    #status-dot.connected { background: var(--green); animation: pulse 1.5s infinite; }
+    #status-dot.connected { background: var(--green); animation: pulse 1.8s infinite; }
     @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50%       { opacity: 0.4; }
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50%       { transform: scale(1.2); opacity: 0.5; }
     }
-
-    /* ===== GRID ===== */
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-      gap: 16px;
-      margin-bottom: 16px;
-    }
-
-    /* ===== CARD ===== */
-    .card {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 20px;
-    }
-    .card-label {
-      font-size: 0.75rem;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      color: var(--text-muted);
-      margin-bottom: 10px;
-    }
-    .card-value {
-      font-size: 2.4rem;
-      font-weight: 700;
-      line-height: 1;
-    }
-    .card-unit { font-size: 1rem; color: var(--text-muted); margin-left: 4px; }
-
-    /* ===== JENIS SAMPAH ===== */
+ 
+    /* ===== PANEL DETEKSI UTAMA ===== */
     #card-jenis {
-      grid-column: 1 / -1;
       text-align: center;
-      padding: 24px;
+      padding: 38px 24px;
       border-width: 2px;
-      transition: border-color 0.4s, background 0.4s;
+      border-style: dashed;
+      border-color: var(--border);
     }
-    #card-jenis.organik {
+    #card-jenis .card-label { justify-content: flex-start; }
+    #card-jenis-inner {
+      border: 2px dashed var(--border);
+      border-radius: 16px;
+      padding: 38px 20px;
+      transition: background 0.3s ease, border-color 0.3s ease;
+    }
+    #card-jenis.organik #card-jenis-inner {
       border-color: var(--green);
       background: var(--green-dim);
+      border-style: solid;
     }
-    #card-jenis.anorganik {
+    #card-jenis.anorganik #card-jenis-inner {
       border-color: var(--blue);
       background: var(--blue-dim);
+      border-style: solid;
     }
     #jenis-label {
-      font-size: 2rem;
-      font-weight: 800;
-      letter-spacing: 2px;
-      transition: color 0.4s;
+      font-size: 2.1rem;
+      font-weight: 900;
+      letter-spacing: 1.5px;
+      color: var(--text-muted);
     }
-    #jenis-label.organik   { color: var(--green); }
-    #jenis-label.anorganik { color: var(--blue); }
-    #jenis-icon { font-size: 3rem; margin-bottom: 8px; display: block; }
-
-    /* ===== SERVO INDICATOR ===== */
+    #jenis-label.organik   { color: #065f46; }
+    #jenis-label.anorganik { color: #1e40af; }
+    #jenis-icon { font-size: 3.6rem; margin-bottom: 14px; display: block; animation: bounce 2s infinite; }
+ 
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-5px); }
+    }
+ 
+    /* ===== SERVO GRAPHIC SLIDER ===== */
     .servo-wrapper {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 12px;
-      margin-top: 6px;
+      gap: 14px;
+      margin-top: 4px;
     }
     .servo-track {
       flex: 1;
-      height: 10px;
-      background: var(--border);
+      height: 12px;
+      background: var(--bg-inner);
       border-radius: 99px;
       position: relative;
+      border: 1px solid var(--border);
     }
     .servo-thumb {
-      width: 18px; height: 18px;
+      width: 22px; height: 22px;
       background: var(--accent);
       border-radius: 50%;
       position: absolute;
       top: 50%; transform: translateY(-50%);
       left: 50%;
-      transition: left 0.6s ease;
-      box-shadow: 0 0 8px var(--accent);
+      transition: left 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+      box-shadow: 0 0 10px rgba(99, 102, 241, 0.5);
     }
-    .servo-thumb.organik   { left: 5%;  background: var(--green); box-shadow: 0 0 8px var(--green); }
-    .servo-thumb.anorganik { left: 90%; background: var(--blue);  box-shadow: 0 0 8px var(--blue); }
-    .servo-thumb.standby   { left: 48%; }
-    .servo-side { font-size: 0.75rem; color: var(--text-muted); white-space: nowrap; }
-
-    /* ===== COUNTER ===== */
+    .servo-thumb.organik   { left: 5%;  background: var(--green); box-shadow: 0 0 10px rgba(16, 185, 129, 0.6); }
+    .servo-thumb.anorganik { left: 90%; background: var(--blue);  box-shadow: 0 0 10px rgba(59, 130, 246, 0.6); }
+    .servo-thumb.standby   { left: 47%; background: var(--accent); }
+    .servo-side { font-size: 0.85rem; font-weight: 700; }
+ 
+    #servo-text {
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      margin-top: 16px;
+      font-weight: 700;
+    }
+ 
+    /* ===== COUNTER BOX ===== */
     .counter-row {
       display: flex;
-      gap: 12px;
+      gap: 14px;
     }
     .counter-box {
       flex: 1;
-      background: var(--bg-card2);
-      border-radius: 10px;
-      padding: 12px;
+      background: var(--bg-inner);
+      border-radius: 14px;
+      padding: 18px 10px;
       text-align: center;
+      border: 1px solid var(--border);
     }
-    .counter-box .num { font-size: 1.8rem; font-weight: 700; }
-    .counter-box .lbl { font-size: 0.72rem; color: var(--text-muted); margin-top: 2px; }
-    .counter-box.org  .num { color: var(--green); }
-    .counter-box.anorg .num { color: var(--blue); }
-
-    /* ===== LOG ===== */
+    .counter-box .num { font-size: 2.2rem; font-weight: 800; }
+    .counter-box .lbl { font-size: 0.75rem; color: var(--text-muted); margin-top: 6px; font-weight: 700; letter-spacing: 0.5px; }
+    .counter-box.org  { background: var(--green-dim); border-color: #a7f3d0; }
+    .counter-box.org  .num { color: #047857; }
+    .counter-box.anorg { background: var(--blue-dim); border-color: #bfdbfe; }
+    .counter-box.anorg .num { color: #1d4ed8; }
+ 
+    /* ===== REALTIME LOG SYSTEM ===== */
     #log-list {
       list-style: none;
-      max-height: 220px;
+      max-height: 230px;
       overflow-y: auto;
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 8px;
       margin-top: 6px;
     }
-    #log-list::-webkit-scrollbar { width: 4px; }
-    #log-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
-
+    #log-list::-webkit-scrollbar { width: 6px; }
+    #log-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 6px; }
+ 
     .log-item {
       display: flex;
       align-items: center;
-      gap: 10px;
-      background: var(--bg-card2);
-      border-radius: 8px;
-      padding: 8px 12px;
-      font-size: 0.82rem;
-      animation: fadeIn 0.3s ease;
+      gap: 12px;
+      background: var(--bg-inner);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      animation: slideIn 0.3s ease-out;
     }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(-6px); } }
-    .log-item .log-time { color: var(--text-muted); white-space: nowrap; font-size: 0.75rem; }
+    @keyframes slideIn { from { opacity: 0; transform: translateX(-10px); } }
+    .log-item .log-time { color: var(--text-muted); font-weight: 600; font-family: monospace; }
     .log-item .log-badge {
-      padding: 2px 8px;
+      padding: 3px 10px;
       border-radius: 99px;
       font-size: 0.7rem;
-      font-weight: 600;
-      white-space: nowrap;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      flex-shrink: 0;
     }
-    .log-badge.organik   { background: var(--green-dim); color: var(--green); border: 1px solid var(--green); }
-    .log-badge.anorganik { background: var(--blue-dim);  color: var(--blue);  border: 1px solid var(--blue); }
-
+    .log-badge.organik   { background: var(--green-dim); color: #047857; }
+    .log-badge.anorganik { background: var(--blue-dim);  color: #1d4ed8; }
+ 
     /* ===== FOOTER ===== */
     footer {
       text-align: center;
-      margin-top: 28px;
+      margin-top: 36px;
       color: var(--text-muted);
-      font-size: 0.78rem;
+      font-size: 0.85rem;
+      font-weight: 500;
+      border-top: 1px solid var(--border);
+      padding-top: 20px;
     }
   </style>
 </head>
 <body>
-
-<header>
-  <h1>🗑️ Eco<span>Sort</span> Dashboard</h1>
-  <p>Smart Trash Sorting Bin — IoT Robotik | MQTT Real-time</p>
-</header>
-
-<!-- Status Bar -->
-<div id="status-bar">
-  <div id="status-dot"></div>
-  <span id="status-text">Menghubungkan ke broker MQTT...</span>
-</div>
-
-<!-- Jenis Sampah (Full Width) -->
-<div class="grid">
-  <div class="card" id="card-jenis">
-    <div class="card-label">Jenis Sampah Terdeteksi</div>
-    <span id="jenis-icon">⏳</span>
-    <div id="jenis-label">MENUNGGU...</div>
+ 
+<div class="container">
+ 
+  <!-- ===== HERO ===== -->
+  <div class="hero">
+    <span class="hero-badge">📡 Dashboard Real-time</span>
+    <h1>Pantau Tempat Sampah <span class="accent">Secara Cerdas</span></h1>
+    <p>Sistem monitoring berbasis IoT yang mendeteksi kelembaban sampah pada tutup tempat sampah untuk memastikan pemilahan yang benar antara organik dan anorganik.</p>
   </div>
-</div>
-
-<!-- Sensor Cards -->
-<div class="grid">
-  <div class="card">
-    <div class="card-label">📏 Jarak Ultrasonik</div>
-    <div class="card-value" id="distance">—<span class="card-unit">cm</span></div>
-  </div>
-  <div class="card">
-    <div class="card-label">💧 Kelembaban Sampah</div>
-    <div class="card-value" id="humidity">—<span class="card-unit">%</span></div>
-  </div>
-</div>
-
-<!-- Servo + Counter -->
-<div class="grid">
-  <div class="card">
-    <div class="card-label">⚙️ Posisi Servo</div>
-    <div class="servo-wrapper">
-      <span class="servo-side">🌿 Organik</span>
-      <div class="servo-track">
-        <div class="servo-thumb standby" id="servo-thumb"></div>
+ 
+  <!-- ===== MAIN LAYOUT ===== -->
+  <div class="layout">
+ 
+    <!-- ===== LEFT COLUMN ===== -->
+    <div class="col">
+ 
+      <div class="card" id="card-jenis">
+        <div class="card-label">Status Analisis Objek</div>
+        <div id="card-jenis-inner">
+          <span id="jenis-icon">⏳</span>
+          <div id="jenis-label">MENUNGGU...</div>
+        </div>
       </div>
-      <span class="servo-side">🔵 Anorganik</span>
+ 
+      <div class="card">
+        <div class="card-label">⚙️ Aktuator / Posisi Penyekat Servo</div>
+        <div class="servo-wrapper">
+          <span class="servo-side" style="color: var(--green);">🌿 Organik</span>
+          <div class="servo-track">
+            <div class="servo-thumb standby" id="servo-thumb"></div>
+          </div>
+          <span class="servo-side" style="color: var(--blue);">🔵 Anorganik</span>
+        </div>
+        <p id="servo-text">Standby (90°)</p>
+      </div>
+ 
     </div>
-    <p style="text-align:center;color:var(--text-muted);font-size:0.8rem;margin-top:10px;" id="servo-text">Standby (90°)</p>
-  </div>
-
-  <div class="card">
-    <div class="card-label">📊 Total Sampah Terpilah</div>
-    <div class="counter-row">
-      <div class="counter-box org">
-        <div class="num" id="count-org">0</div>
-        <div class="lbl">🌿 Organik</div>
+ 
+    <!-- ===== RIGHT COLUMN ===== -->
+    <div class="col">
+ 
+      <div id="status-bar">
+        <div id="status-dot"></div>
+        <span id="status-text">Menghubungkan ke broker MQTT...</span>
       </div>
-      <div class="counter-box anorg">
-        <div class="num" id="count-anorg">0</div>
-        <div class="lbl">🔵 Anorganik</div>
+ 
+      <div class="stat-row">
+        <div class="card">
+          <div class="card-label">📏 Jarak</div>
+          <div class="card-value" id="distance">—<span class="card-unit">cm</span></div>
+        </div>
+        <div class="card">
+          <div class="card-label">💧 Kelembaban</div>
+          <div class="card-value" id="humidity">—<span class="card-unit">%</span></div>
+        </div>
       </div>
+ 
+      <div class="card">
+        <div class="card-label">📊 Akumulasi Volume Pemilahan</div>
+        <div class="counter-row">
+          <div class="counter-box org">
+            <div class="num" id="count-org">0</div>
+            <div class="lbl">ORGANIK</div>
+          </div>
+          <div class="counter-box anorg">
+            <div class="num" id="count-anorg">0</div>
+            <div class="lbl">ANORGANIK</div>
+          </div>
+        </div>
+      </div>
+ 
+      <div class="card">
+        <div class="card-label">📋 Audit Log Aktivitas</div>
+        <ul id="log-list">
+          <li class="log-item"><span class="log-time">--:--:--</span><span style="color:var(--text-muted)">Menunggu transmisi data dari EcoSort...</span></li>
+        </ul>
+      </div>
+ 
     </div>
+ 
   </div>
+ 
+  <footer>
+    <p>EcoSort v1.1 | Broker: broker.hivemq.com | Topics: ecosort/#</p>
+    <p style="margin-top:4px; color: var(--green); font-weight: 700;">Proyek UAS IoT Robotik</p>
+  </footer>
 </div>
-
-<!-- Log -->
-<div class="card">
-  <div class="card-label">📋 Log Aktivitas</div>
-  <ul id="log-list">
-    <li class="log-item"><span class="log-time">--:--:--</span><span style="color:var(--text-muted)">Menunggu data dari EcoSort...</span></li>
-  </ul>
-</div>
-
-<footer>
-  <p>EcoSort v1.0 | Broker: broker.hivemq.com | Topics: ecosort/#</p>
-  <p style="margin-top:4px;">Proyek UAS IoT Robotik</p>
-</footer>
 
 <script>
   // ===== KONFIGURASI MQTT =====
@@ -303,18 +405,29 @@
   let countAnorg = 0;
 
   // ===== ELEMEN DOM =====
-  const elDot      = document.getElementById("status-dot");
-  const elStatus   = document.getElementById("status-text");
-  const elDist     = document.getElementById("distance");
-  const elHumidity = document.getElementById("humidity");
-  const elJenis    = document.getElementById("jenis-label");
-  const elJenisIcon= document.getElementById("jenis-icon");
-  const elCardJenis= document.getElementById("card-jenis");
+  const elDot       = document.getElementById("status-dot");
+  const elStatus    = document.getElementById("status-text");
+  const elDist      = document.getElementById("distance");
+  const elHumidity  = document.getElementById("humidity");
+  const elJenis     = document.getElementById("jenis-label");
+  const elJenisIcon = document.getElementById("jenis-icon");
+  const elCardJenis = document.getElementById("card-jenis");
   const elServoThumb = document.getElementById("servo-thumb");
   const elServoText  = document.getElementById("servo-text");
   const elCountOrg   = document.getElementById("count-org");
   const elCountAnorg = document.getElementById("count-anorg");
   const elLog        = document.getElementById("log-list");
+
+  // ===== FUNGSI SANITASI SECURITY =====
+  function escapeHTML(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#x27;');
+  }
 
   // ===== FUNGSI UTILITAS =====
   function timeNow() {
@@ -380,10 +493,23 @@
     let payload;
     try { payload = JSON.parse(message.toString()); } catch { return; }
 
+    // 1. Memproses Topik Sensor (Terintegrasi Lapisan Keamanan)
     if (topic === "ecosort/sensor") {
-      const { distance, humidity, jenis } = payload;
+      let { distance, humidity, jenis } = payload;
 
-      // Update angka sensor
+      // 🛡️ SECURITY LAYER 1: VALIDASI TIPE DATA
+      distance = Number(distance);
+      humidity = Number(humidity);
+      
+      if (isNaN(distance) || isNaN(humidity)) {
+        console.warn("🛡️ Security Alert: Data sensor tidak valid atau terindikasi tampering!");
+        return; // Tolak payload jika bukan angka
+      }
+
+      // 🛡️ SECURITY LAYER 2: SANITASI STRING MENGGUNAKAN ESCAPE
+      jenis = escapeHTML(jenis);
+
+      // Update angka sensor secara aman
       elDist.innerHTML     = `${distance}<span class="card-unit">cm</span>`;
       elHumidity.innerHTML = `${humidity}<span class="card-unit">%</span>`;
 
@@ -398,6 +524,7 @@
       addLog(jenis, humidity, distance);
     }
 
+    // 2. Memproses Topik Servo (Bawaan Asli)
     if (topic === "ecosort/servo") {
       const { posisi, derajat } = payload;
       updateServo(posisi, derajat);
