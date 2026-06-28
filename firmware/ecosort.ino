@@ -158,3 +158,63 @@ void setup() {
 
   Serial.println("[System] EcoSort siap!\n");
 }
+// ============================================================
+//  FEATURE: AKTUATOR — Servo Logic & Main Loop
+// ============================================================
+void loop() {
+  if (!mqtt.connected()) {
+    reconnect_mqtt();
+  }
+  mqtt.loop();
+
+  long dist = getDistance();
+  Serial.print("[Sensor] Jarak: ");
+  Serial.print(dist);
+  Serial.print(" cm");
+
+  if (dist > 1 && dist < ULTRA_DISTANCE) {
+    Serial.println(" -> ADA SAMPAH! Membaca kelembaban...");
+    delay(500);
+
+    int humidity = getSoilHumidity();
+    Serial.print("[Sensor] Kelembaban: ");
+    Serial.print(humidity);
+    Serial.print("%");
+
+    bool isOrganik = (humidity > HUMIDITY_THRESH);
+    const char* jenis = isOrganik ? "organik" : "anorganik";
+
+    Serial.print(" -> ");
+    Serial.println(isOrganik ? "ORGANIK (basah)" : "ANORGANIK (kering)");
+
+    char payload[200];
+    snprintf(payload, sizeof(payload),
+      "{\"distance\":%ld,\"humidity\":%d,\"jenis\":\"%s\"}",
+      dist, humidity, jenis
+    );
+    mqtt.publish(TOPIC_SENSOR, payload);
+
+    if (isOrganik) {
+      Serial.println("[Servo] -> Kiri (ORGANIK) 170");
+      mqtt.publish(TOPIC_SERVO, "{\"posisi\":\"organik\",\"derajat\":170}");
+      servo1.write(SERVO_ORGANIK);
+    } else {
+      Serial.println("[Servo] -> Kanan (ANORGANIK) 10");
+      mqtt.publish(TOPIC_SERVO, "{\"posisi\":\"anorganik\",\"derajat\":10}");
+      servo1.write(SERVO_ANORGANIK);
+    }
+
+    delay(SERVO_HOLD_MS);
+
+    Serial.println("[Servo] -> Kembali tengah (standby)");
+    servo1.write(SERVO_TENGAH);
+    mqtt.publish(TOPIC_SERVO, "{\"posisi\":\"standby\",\"derajat\":90}");
+
+    delay(1000);
+
+  } else {
+    Serial.println(" -> Tidak ada sampah");
+  }
+
+  delay(1000);
+}
